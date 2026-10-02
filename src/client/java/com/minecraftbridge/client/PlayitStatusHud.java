@@ -29,8 +29,8 @@ public class PlayitStatusHud implements HudElement {
 		if (status == PlayitStatus.IDLE) return;
 
 		Minecraft mc = Minecraft.getInstance();
-if (mc.getScreen() != null) return; // hide while a menu is open
-if (mc.options.hideGui) return;
+		if (mc.screen != null) return; // hide while a menu is open
+		if (mc.options.hideGui()) return;
 
 		Component text = buildBadge(status, PlayitStatus.detail());
 		Font font = mc.font;
