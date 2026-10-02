@@ -13,7 +13,6 @@ import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Checkbox;
-// Remove: import net.minecraft.client.gui.screens.ShareToLanScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -42,10 +41,14 @@ public class BedrockBridgeClient implements ClientModInitializer {
 	}
 
 	private void onScreenAfterInit(Minecraft client, net.minecraft.client.gui.screens.Screen screen, int width, int height) {
-    // Check for ShareToLanScreen by class name instead of direct import
-    if (!screen.getClass().getSimpleName().equals("ShareToLanScreen")) {
-        return;
-    }
+		if (screen == null) {
+			return;
+		}
+
+		String className = screen.getClass().getName();
+		if (!className.endsWith(".ShareToLanScreen") && !className.endsWith(".OpenToLanScreen")) {
+			return;
+		}
 
 		Checkbox checkbox = Checkbox.builder(
 				Component.literal(Lang.get("bedrockbridge.checkbox.share_with_bedrock")),
@@ -60,7 +63,7 @@ public class BedrockBridgeClient implements ClientModInitializer {
 			.build();
 
 		Screens.getWidgets(screen).add(checkbox);
-		BedrockBridge.LOGGER.info("Checkbox injected into ShareToLanScreen (initial state: {}).", BedrockBridgeState.shareWithBedrock);
+		BedrockBridge.LOGGER.info("Checkbox injected into LAN screen (initial state: {}).", BedrockBridgeState.shareWithBedrock);
 	}
 
 	private void onClientTick(Minecraft client) {
