@@ -1,6 +1,6 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
+        id 'net.fabricmc.fabric-loom' version "${loom_version}"
+        id 'maven-publish'
 }
 
 import java.security.MessageDigest
@@ -12,156 +12,156 @@ group = project.maven_group
 // in a different jar. SHA256 for Geyser (GeyserMC CI), SHA512 for Floodgate (Modrinth
 // doesn't publish SHA256 in its API). See [[geyser-embedding-decisions]] in memory.
 ext.embeddedJars = [
-	[
-		name: 'Geyser-Fabric-1153.jar',
-		url: 'https://download.geysermc.org/v2/projects/geyser/versions/2.10.0/builds/1153/downloads/fabric',
-		algorithm: 'SHA-256',
-		hash: '143725f0d30f7134c884954a5f14ebccc7ff6d1267a21fc0b0e33507f99370ea'
-	],
-	[
-		name: 'Floodgate-Fabric-2.2.6-b63.jar',
-		url: 'https://cdn.modrinth.com/data/bWrNNfkb/versions/fD4J9lnX/Floodgate-Fabric-2.2.6-b63.jar',
-		algorithm: 'SHA-512',
-		hash: '54874033236df688da15fd4dd7d2d99d002e8955cb2d788d5ba409d753eb17629f53a6e976992de8cca8c8dd3663c70b283da88b5a12d72cef9647d09e04ae62'
-	]
+        [
+                name: 'Geyser-Fabric-1153.jar',
+                url: 'https://download.geysermc.org/v2/projects/geyser/versions/2.11.0/builds/1201/downloads/fabric',
+                algorithm: 'SHA-256',
+                hash: '61f727f3fe1040c8dea43f41cf1fdeb226a089ffd03d0b4593ea0b7162877133'
+        ],
+        [
+                name: 'Floodgate-Fabric-2.2.6-b63.jar',
+                url: 'https://cdn.modrinth.com/data/bWrNNfkb/versions/fD4J9lnX/Floodgate-Fabric-2.2.6-b63.jar',
+                algorithm: 'SHA-512',
+                hash: '54874033236df688da15fd4dd7d2d99d002e8955cb2d788d5ba409d753eb17629f53a6e976992de8cca8c8dd3663c70b283da88b5a12d72cef9647d09e04ae62'
+        ]
 ]
 
 def computeHash(File file, String algorithm) {
-	def digest = MessageDigest.getInstance(algorithm)
-	file.withInputStream { input ->
-		byte[] buf = new byte[8192]
-		int n
-		while ((n = input.read(buf)) > 0) digest.update(buf, 0, n)
-	}
-	return digest.digest().encodeHex().toString()
+        def digest = MessageDigest.getInstance(algorithm)
+        file.withInputStream { input ->
+                byte[] buf = new byte[8192]
+                int n
+                while ((n = input.read(buf)) > 0) digest.update(buf, 0, n)
+        }
+        return digest.digest().encodeHex().toString()
 }
 
 tasks.register('downloadEmbeddedJars') {
-	group = 'build setup'
-	description = 'Descarga y verifica Geyser-Fabric + Floodgate-Fabric en libs/.'
+        group = 'build setup'
+        description = 'Descarga y verifica Geyser-Fabric + Floodgate-Fabric en libs/.'
 
-	def libsDir = file('libs')
-	outputs.dir libsDir
-	doLast {
-		libsDir.mkdirs()
-		embeddedJars.each { spec ->
-			def target = new File(libsDir, spec.name)
-			if (target.exists() && computeHash(target, spec.algorithm).equalsIgnoreCase(spec.hash)) {
-				logger.lifecycle "OK: ${spec.name} ya presente con ${spec.algorithm} correcto."
-				return
-			}
-			logger.lifecycle "Descargando ${spec.name} desde ${spec.url}"
-			new URL(spec.url).withInputStream { input ->
-				target.withOutputStream { output -> output << input }
-			}
-			def actual = computeHash(target, spec.algorithm)
-			if (!actual.equalsIgnoreCase(spec.hash)) {
-				target.delete()
-				throw new GradleException("${spec.algorithm} mismatch para ${spec.name}: esperado ${spec.hash}, recibido ${actual}")
-			}
-			logger.lifecycle "OK: ${spec.name} descargado y verificado."
-		}
-	}
+        def libsDir = file('libs')
+        outputs.dir libsDir
+        doLast {
+                libsDir.mkdirs()
+                embeddedJars.each { spec ->
+                        def target = new File(libsDir, spec.name)
+                        if (target.exists() && computeHash(target, spec.algorithm).equalsIgnoreCase(spec.hash)) {
+                                logger.lifecycle "OK: ${spec.name} ya presente con ${spec.algorithm} correcto."
+                                return
+                        }
+                        logger.lifecycle "Descargando ${spec.name} desde ${spec.url}"
+                        new URL(spec.url).withInputStream { input ->
+                                target.withOutputStream { output -> output << input }
+                        }
+                        def actual = computeHash(target, spec.algorithm)
+                        if (!actual.equalsIgnoreCase(spec.hash)) {
+                                target.delete()
+                                throw new GradleException("${spec.algorithm} mismatch para ${spec.name}: esperado ${spec.hash}, recibido ${actual}")
+                        }
+                        logger.lifecycle "OK: ${spec.name} descargado y verificado."
+                }
+        }
 }
 
 // compileClientJava is created later by Loom's splitEnvironmentSourceSets(),
 // so wire deps reactively via tasks.matching to avoid "task not found" at config time.
 tasks.matching { it.name in ['compileJava', 'compileClientJava', 'processResources'] }
-		.configureEach { dependsOn 'downloadEmbeddedJars' }
+                .configureEach { dependsOn 'downloadEmbeddedJars' }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-	maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
-	maven { url 'https://repo.opencollab.dev/maven-releases/' }
+        // Add repositories to retrieve artifacts from in here.
+        // You should only use this when depending on other mods because
+        // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+        // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+        // for more information about repositories.
+        maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+        maven { url 'https://repo.opencollab.dev/maven-releases/' }
 }
 
 loom {
-	splitEnvironmentSourceSets()
+        splitEnvironmentSourceSets()
 
-	mods {
-		"modid" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+        mods {
+                "modid" {
+                        sourceSet sourceSets.main
+                        sourceSet sourceSets.client
+                }
+        }
 
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        // To change the versions see the gradle.properties file
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+        // Fabric API. This is technically optional, but you probably want it anyway.
+        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	// Geyser-Fabric + Floodgate-Fabric — bajados automáticamente por la tarea
-	// downloadEmbeddedJars (con SHA pinneado). `compileOnly` los mantiene fuera
-	// del classpath de runtime: el jar de prod los lleva como JIJ vía el bloque
-	// `jar` de abajo, y dev los carga desde run/mods/.
-	compileOnly files('libs/Geyser-Fabric-1153.jar')
-	compileOnly files('libs/Floodgate-Fabric-2.2.6-b63.jar')
+        // Geyser-Fabric + Floodgate-Fabric — bajados automáticamente por la tarea
+        // downloadEmbeddedJars (con SHA pinneado). `compileOnly` los mantiene fuera
+        // del classpath de runtime: el jar de prod los lleva como JIJ vía el bloque
+        // `jar` de abajo, y dev los carga desde run/mods/.
+        compileOnly files('libs/Geyser-Fabric-1153.jar')
+        compileOnly files('libs/Floodgate-Fabric-2.2.6-b63.jar')
 }
 
 processResources {
-	def version = project.version
-	inputs.property "version", version
+        def version = project.version
+        inputs.property "version", version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
+        filesMatching("fabric.mod.json") {
+                expand "version": version
+        }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
+        it.options.release = 25
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+        // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+        // if it is present.
+        // If you remove this line, sources will not be generated.
+        withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
+        def projectName = project.name
+        inputs.property "projectName", projectName
 
-	from("LICENSE") {
-		rename { "${it}_$projectName"}
-	}
+        from("LICENSE") {
+                rename { "${it}_$projectName"}
+        }
 
-	// Embed Geyser-Fabric + Floodgate-Fabric as nested JIJ. Fabric Loader needs them
-	// declared explicitly in fabric.mod.json `jars` array — auto-scan doesn't happen.
-	from('libs/Geyser-Fabric-1153.jar') {
-		into 'META-INF/jars/'
-	}
-	from('libs/Floodgate-Fabric-2.2.6-b63.jar') {
-		into 'META-INF/jars/'
-	}
+        // Embed Geyser-Fabric + Floodgate-Fabric as nested JIJ. Fabric Loader needs them
+        // declared explicitly in fabric.mod.json `jars` array — auto-scan doesn't happen.
+        from('libs/Geyser-Fabric-1153.jar') {
+                into 'META-INF/jars/'
+        }
+        from('libs/Floodgate-Fabric-2.2.6-b63.jar') {
+                into 'META-INF/jars/'
+        }
 }
 
 // configure the maven publication
 publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			from components.java
-		}
-	}
+        publications {
+                create("mavenJava", MavenPublication) {
+                        from components.java
+                }
+        }
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+        // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+        repositories {
+                // Add repositories to publish to here.
+                // Notice: This block does NOT have the same function as the block in the top level.
+                // The repositories here will be used for publishing your artifact, not for
+                // retrieving dependencies.
+        }
 }
