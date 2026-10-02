@@ -13,7 +13,7 @@ import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Checkbox;
-import net.minecraft.client.gui.screens.ShareToLanScreen;
+// Remove: import net.minecraft.client.gui.screens.ShareToLanScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -42,9 +42,10 @@ public class BedrockBridgeClient implements ClientModInitializer {
 	}
 
 	private void onScreenAfterInit(Minecraft client, net.minecraft.client.gui.screens.Screen screen, int width, int height) {
-		if (!(screen instanceof ShareToLanScreen)) {
-			return;
-		}
+    // Check for ShareToLanScreen by class name instead of direct import
+    if (!screen.getClass().getSimpleName().equals("ShareToLanScreen")) {
+        return;
+    }
 
 		Checkbox checkbox = Checkbox.builder(
 				Component.literal(Lang.get("bedrockbridge.checkbox.share_with_bedrock")),
